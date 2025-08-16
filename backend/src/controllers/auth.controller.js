@@ -185,3 +185,59 @@ export function logout(req, res) {
     message: "Logged out successfully",
   });
 }
+
+
+export async function onboarding (req,res){
+  try {
+    const userId =req.user._id;
+    
+    const {fullName,bio,nativeLanguage,learningLanguage,location}=req.body;
+
+    if(!fullName || !bio || !nativeLanguage || !learningLanguage || !location){
+      return res.status(400).json({
+        message:"All fields are required ",
+        missingFields:[
+          !fullName && "fullName",
+          !bio && "bio",
+          !nativeLanguage && "nativeLanguage",
+          !learningLanguage && "learningLanguage",
+          !location && "location"
+        ].filter(Boolean),
+      })
+    }
+   const updatedUser= await User.findByIdAndUpdate(userId,{
+      ...req.body,
+      isOnboarded:true
+    },{new:true})
+
+
+    if(!updatedUser){
+      return res.status(404).json({
+        message: "User Not found"
+      })
+    }
+
+    res.status(200).json({
+      success:true,
+      user:updatedUser
+    })
+    // stream update the user 
+   try {
+     await upsertStreamUser({
+      id:updatedUser.id.toString(),
+      name:updatedUser.fullName,
+      image:updatedUser.profilepic || "",
+      
+    })
+    console.log(`Steam update after onboarding ${updatedUser.fullName}`);
+   } catch (streamError) {
+      console.log('Update error Occured while updated Stream Data',streamError.message)
+   }
+
+  } catch (error) {
+      console.log("Onboading error : ",error);
+      return res.status(500).json({
+        message:"Server Error"
+      })
+  }
+}
