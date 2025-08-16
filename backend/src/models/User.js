@@ -51,10 +51,8 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const User = mongoose.model("User", userSchema);
-
-//pre hook
-userSchema.pre("save", async (next) => {
+// pre hook - use regular function instead of arrow function
+userSchema.pre("save", async function(next) {
   if (!this.isModified("password")) return next();
   try {
     const salt = await bcrypt.genSalt(10);
@@ -64,5 +62,7 @@ userSchema.pre("save", async (next) => {
     next(error);
   }
 });
+
+const User = mongoose.model("User", userSchema);
 
 export default User;
