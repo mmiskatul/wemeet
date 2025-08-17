@@ -38,3 +38,8 @@ export async function getMyFriends(req, res) {
     });
   }
 }
+
+
+export async function sendFriendsRequest(req,res) {
+        
+}
