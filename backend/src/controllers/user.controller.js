@@ -154,10 +154,38 @@ export async function getFriendRequest(req, res) {
       status: "accepted",
     }).populate("recipient", "fullName profilepic");
     res.status(200).json({
-        incomingRequest,acceptedRequest
-    })
+      incomingRequest,
+      acceptedRequest,
+    });
   } catch (error) {
-    console.log('Error in getPendingFriendRequest Controller ',error.message);
-    res.status(500).json({message:"Server Error"});
+    console.log("Error in getPendingFriendRequest Controller ", error.message);
+    res.status(500).json({ message: "Server Error" });
   }
+}
+
+export async function getOutgoingFriendReq(req, res) {
+  try {
+    const outgoingrequest = await FriendRequest.find({
+      sender: req.user.id,
+      status: "pending",
+    }).populate(
+      "recipient",
+      "fullName profilepic nativeLanguage learningLanguage"
+    );
+    res.status(200).json(outgoingrequest)
+  } catch (error) {
+    console.error("Error in the getOutgoingFriendReq controller",error.message);
+    res.status(500).json({
+        message:"Server Error"
+    })
+    
+  }
+}
+
+export async function rejectFriendsRequest(req,res){
+    try {
+        
+    } catch (error) {
+        
+    }
 }
