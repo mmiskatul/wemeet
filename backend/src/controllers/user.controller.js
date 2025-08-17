@@ -90,54 +90,74 @@ export async function sendFriendsRequest(req, res) {
     });
 
     res.status(201).json(friendRequest);
-
   } catch (error) {
-    console.error('error in sendFriendRequest controller : ',error.message);
+    console.error("error in sendFriendRequest controller : ", error.message);
     res.status(500).json({
-        message:"Server Error"
-    })
+      message: "Server Error",
+    });
   }
 }
 
-export async function acceptFriendsRequest(req,res){
-    try {
-        const {id:requestId}=req.params;
-        const friendRequest =await FriendRequest.findById(requestId);
-        if(!friendRequest){
-            return res.status(400).json({
-                message:"Friend request not Found"
-            })
-        }
-
-        // check verify current user is the recipient
-        if(friendRequest.recipient.toString() !==req.user.id){
-            return res.status(403).json({
-                message :"You are not authorized to accept the request "
-            })
-        }
-       friendRequest.status="accepted"
-       await friendRequest.save();
-
-    //    add the both user in the other's frined's array 
-        await User.findByIdAndUpdate(friendRequest.sender,{
-            $addToSet :{
-                friends:friendRequest.recipient
-            }
-        })
-        await User.findByIdAndUpdate(friendRequest.recipient,{
-            $addToSet :{
-                friends:friendRequest.sender
-            }
-        })
-
-        res.status(200).json({
-            message:"Friend request accepted"
-        })
-
-    } catch (error) {
-        console.error("Error in AcceptRequestController ",error);
-        res.status(500).json({
-            message:"Server Error"
-        })
+export async function acceptFriendsRequest(req, res) {
+  try {
+    const { id: requestId } = req.params;
+    const friendRequest = await FriendRequest.findById(requestId);
+    if (!friendRequest) {
+      return res.status(400).json({
+        message: "Friend request not Found",
+      });
     }
+
+    // check verify current user is the recipient
+    if (friendRequest.recipient.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "You are not authorized to accept the request ",
+      });
+    }
+    friendRequest.status = "accepted";
+    await friendRequest.save();
+
+    //    add the both user in the other's frined's array
+    await User.findByIdAndUpdate(friendRequest.sender, {
+      $addToSet: {
+        friends: friendRequest.recipient,
+      },
+    });
+    await User.findByIdAndUpdate(friendRequest.recipient, {
+      $addToSet: {
+        friends: friendRequest.sender,
+      },
+    });
+
+    res.status(200).json({
+      message: "Friend request accepted",
+    });
+  } catch (error) {
+    console.error("Error in AcceptRequestController ", error);
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+}
+
+export async function getFriendRequest(req, res) {
+  try {
+    const incomingRequest = await FriendRequest.find({
+      recipient: req.user.id,
+      status: "pending",
+    }).populate(
+      "sender",
+      "fullName profilepic nativeLanguage learningLanguage"
+    );
+    const acceptedRequest = await FriendRequest.find({
+      sender: req.user.id,
+      status: "accepted",
+    }).populate("recipient", "fullName profilepic");
+    res.status(200).json({
+        incomingRequest,acceptedRequest
+    })
+  } catch (error) {
+    console.log('Error in getPendingFriendRequest Controller ',error.message);
+    res.status(500).json({message:"Server Error"});
+  }
 }
